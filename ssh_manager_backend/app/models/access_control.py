@@ -1,2 +1,89 @@
-class AccessControl:
-    pass
+from typing import List
+
+from sqlalchemy.exc import SQLAlchemyError
+
+from ssh_manager_backend.db import AccessControl
+from ssh_manager_backend.db.database import db_session
+
+
+class AccessControlModel:
+    def __init__(self):
+        self.session = db_session()
+
+    def has_access(self, username: str, ip_address: str) -> bool:
+        """
+        Checks whether a user has access to the provided the list of ip addresses.
+
+        :param username:
+        :param ip_address:
+        :return: boolean value stating whether user has access or not.
+        """
+
+        try:
+            acl_details: AccessControl = self.session.query(AccessControl).filter(
+                AccessControl.username == username
+            ).first()
+            return ip_address in acl_details.ip_addresses
+        except [AttributeError, SQLAlchemyError]:
+            return False
+
+    def grant_access(self, username: str, ip_addresses: List[str]) -> bool:
+        """
+        Updates user access.
+
+        :param username:
+        :param ip_addresses:
+        :return: booleans value for success/failure.
+        """
+
+        try:
+            acl_details: AccessControl = self.session.query(AccessControl).filter(
+                AccessControl.username == username
+            ).first()
+
+            acl_details.ip_addresses += ip_addresses
+            acl_details.ip_addresses = list(set(acl_details.ip_addresses))
+            self.session.commit()
+        except [AttributeError, SQLAlchemyError]:
+            return False
+
+        return True
+
+    def remove_access(self, username: str, ip_addresses: List[str]) -> bool:
+        """
+        Updates user access.
+
+        :param username:
+        :param ip_addresses:
+        :return: booleans value for success/failure.
+        """
+
+        try:
+            acl_details: AccessControl = self.session.query(AccessControl).filter(
+                AccessControl.username == username
+            ).first()
+
+            for ip in ip_addresses:
+                acl_details.ip_addresses.remove(ip)
+
+            self.session.commit()
+        except [AttributeError, SQLAlchemyError]:
+            return False
+
+        return True
+
+    def get_all_ips(self, username: str) -> List[str]:
+        """
+        Gets list of all Ip addresses for the given user.
+
+        :param username:
+        :return: list of ip addresses.
+        """
+
+        try:
+            acl_details: AccessControl = self.session.query(AccessControl).filter(
+                AccessControl.username == username
+            ).first()
+            return acl_details.ip_addresses
+        except [AttributeError, SQLAlchemyError]:
+            return []
