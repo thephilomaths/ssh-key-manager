@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 DB_URI = "postgresql+psycopg2://postgres:ssh_manager@localhost/ssh_manager_dev"
-engine = create_engine(DB_URI, convert_unicode=True, echo=True)
+engine = create_engine(DB_URI, echo=True)
 db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
 )
