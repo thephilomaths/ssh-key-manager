@@ -94,6 +94,7 @@ class UserModel:
             self.session.add(user)
             self.session.commit()
         except SQLAlchemyError:
+            self.session.rollback()
             return False
 
         return True
@@ -124,3 +125,23 @@ class UserModel:
         """
 
         return self.session.query(User).filter(User.username == username).first()
+
+    def destroy_user(self, username: str) -> bool:
+        """
+        Deletes a user.
+
+        :param username:
+        :return: Boolean value indicating success/failure.
+        """
+
+        try:
+            user: User = self.session.query(User).filter(
+                User.username == username
+            ).first()
+            self.session.delete(user)
+            self.session.commit()
+        except SQLAlchemyError:
+            self.session.rollback()
+            return False
+
+        return True
