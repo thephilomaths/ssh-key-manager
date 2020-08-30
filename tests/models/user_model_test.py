@@ -1,8 +1,16 @@
+import pytest
+
 from ssh_manager_backend.app.models.user import UserModel
 from ssh_manager_backend.db import User
+from tests.test_ssh_manager_backend import db_cleanup
 
 
 class TestUserModel:
+    @pytest.fixture
+    def cleanup(self):
+        yield
+        db_cleanup()
+
     def test_create(self):
         user = UserModel()
         name: str = "test_user"
@@ -72,7 +80,7 @@ class TestUserModel:
         assert isinstance(user.get_user(username), User) is True
         print(User)
 
-    def test_destroy_user(self):
+    def test_destroy_user(self, cleanup):
         user = UserModel()
         username: str = "test_username"
         assert user.destroy_user("non_existent_username") is False

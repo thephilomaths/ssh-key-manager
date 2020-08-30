@@ -7,11 +7,11 @@ def test_version():
     assert __version__ == "0.1.0"
 
 
-def test_delete():
+def db_cleanup():
     session = db_session()
-    session.query(User).delete()
-    session.query(Key).delete()
-    session.query(KeyMapping).delete()
     session.query(AccessControl).delete()
+    session.query(KeyMapping).delete()
+    session.query(Key).delete()
+    session.query(User).delete()
     session.commit()
     db_session.remove()
