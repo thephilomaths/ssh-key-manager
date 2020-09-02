@@ -77,12 +77,15 @@ class AccessControlModel:
 
         return True
 
-    def revoke_access(self, username: str, ip_addresses: List[str]) -> bool:
+    def revoke_access(
+        self, username: str, ip_addresses: List[str], revoke_all: bool = False
+    ) -> bool:
         """
         Updates user access.
 
         :param username:
         :param ip_addresses:
+        :param revoke_all:.
         :return: booleans value for success/failure.
         """
 
@@ -91,15 +94,21 @@ class AccessControlModel:
                 AccessControl.username == username
             ).first()
 
-            for ip in ip_addresses:
-                try:
-                    acl_details.ip_addresses.remove(ip)
-                except ValueError:
-                    continue
+            if not revoke_all:
+                for ip in ip_addresses:
+                    try:
+                        acl_details.ip_addresses.remove(ip)
+                    except ValueError:
+                        continue
 
-            self.session.query(AccessControl).filter(
-                AccessControl.username == username
-            ).update({"ip_addresses": acl_details.ip_addresses})
+                self.session.query(AccessControl).filter(
+                    AccessControl.username == username
+                ).update({"ip_addresses": acl_details.ip_addresses})
+            else:
+                self.session.query(AccessControl).filter(
+                    AccessControl.username == username
+                ).update({"ip_addresses": []})
+
             self.session.commit()
         except AttributeError:
             return False
