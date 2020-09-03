@@ -25,21 +25,21 @@ class KeyMappingModel:
             is not None
         )
 
-    def create(self, ip_address: str, key_name: str, key: Key) -> bool:
+    def create(self, ip_address: str, key_name: str) -> bool:
         """
         Creates a key mapping in db.
 
         :param ip_address:
         :param key_name:
-        :param key: Key object
         :return: Boolean value indicating success/failure.
         """
 
         try:
-            key_mapping = KeyMapping(key_name=key_name, ip_address=ip_address, key=key)
+            key_mapping = KeyMapping(key_name=key_name, ip_address=ip_address)
             self.session.add(key_mapping)
             self.session.commit()
         except SQLAlchemyError:
+            self.session.rollback()
             return False
 
         return True

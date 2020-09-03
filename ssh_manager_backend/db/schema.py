@@ -1,4 +1,4 @@
-from sqlalchemy import ARRAY, Binary, Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import ARRAY, Boolean, Column, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.orm import relationship
 
 from ssh_manager_backend.db.database import Base
@@ -12,12 +12,12 @@ class User(Base):
     username = Column(String, unique=True)
     password = Column(String)
     admin = Column(Boolean)
-    encrypted_dek = Column(Binary, unique=True)
-    iv_for_dek = Column(Binary, unique=True)
-    salt_for_dek = Column(Binary, unique=True)
-    iv_for_kek = Column(Binary, unique=True)
-    salt_for_kek = Column(Binary, unique=True)
-    salt_for_password = Column(Binary, unique=True)
+    encrypted_dek = Column(LargeBinary, unique=True)
+    iv_for_dek = Column(LargeBinary, unique=True)
+    salt_for_dek = Column(LargeBinary, unique=True)
+    iv_for_kek = Column(LargeBinary, unique=True)
+    salt_for_kek = Column(LargeBinary, unique=True)
+    salt_for_password = Column(LargeBinary, unique=True)
     keys = relationship("Key", backref="users")
     access_control = relationship("AccessControl", backref="users")
 
@@ -34,7 +34,7 @@ class Key(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    encrypted_key = Column(Binary, unique=True)
+    encrypted_key = Column(LargeBinary, unique=True)
     key_hash = Column(String, unique=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")

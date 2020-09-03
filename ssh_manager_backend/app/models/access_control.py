@@ -10,6 +10,26 @@ class AccessControlModel:
     def __init__(self):
         self.session = db_session()
 
+    def create(self, username: str):
+        """
+        Creates an entry in the access_control table for the given user.
+
+        :param username
+        :return: boolean value whether the entry is created or not.
+        """
+
+        try:
+            acl_details: AccessControl = AccessControl(
+                username=username, ip_addresses=[]
+            )
+            self.session.add(acl_details)
+            self.session.commit()
+        except SQLAlchemyError:
+            self.session.rollback()
+            return False
+
+        return True
+
     def has_access(self, username: str, ip_address: str) -> bool:
         """
         Checks whether a user has access to the provided the list of ip addresses.
@@ -43,18 +63,29 @@ class AccessControlModel:
 
             acl_details.ip_addresses += ip_addresses
             acl_details.ip_addresses = list(set(acl_details.ip_addresses))
+
+            self.session.query(AccessControl).filter(
+                AccessControl.username == username
+            ).update({"ip_addresses": acl_details.ip_addresses})
+
             self.session.commit()
-        except [AttributeError, SQLAlchemyError]:
+        except AttributeError:
+            return False
+        except SQLAlchemyError:
+            self.session.rollback()
             return False
 
         return True
 
-    def remove_access(self, username: str, ip_addresses: List[str]) -> bool:
+    def revoke_access(
+        self, username: str, ip_addresses: List[str], revoke_all: bool = False
+    ) -> bool:
         """
         Updates user access.
 
         :param username:
         :param ip_addresses:
+        :param revoke_all:.
         :return: booleans value for success/failure.
         """
 
@@ -63,11 +94,26 @@ class AccessControlModel:
                 AccessControl.username == username
             ).first()
 
-            for ip in ip_addresses:
-                acl_details.ip_addresses.remove(ip)
+            if not revoke_all:
+                for ip in ip_addresses:
+                    try:
+                        acl_details.ip_addresses.remove(ip)
+                    except ValueError:
+                        continue
+
+                self.session.query(AccessControl).filter(
+                    AccessControl.username == username
+                ).update({"ip_addresses": acl_details.ip_addresses})
+            else:
+                self.session.query(AccessControl).filter(
+                    AccessControl.username == username
+                ).update({"ip_addresses": []})
 
             self.session.commit()
-        except [AttributeError, SQLAlchemyError]:
+        except AttributeError:
+            return False
+        except SQLAlchemyError:
+            self.session.rollback()
             return False
 
         return True
@@ -85,5 +131,5 @@ class AccessControlModel:
                 AccessControl.username == username
             ).first()
             return acl_details.ip_addresses
-        except [AttributeError, SQLAlchemyError]:
+        except (AttributeError, SQLAlchemyError):
             return []

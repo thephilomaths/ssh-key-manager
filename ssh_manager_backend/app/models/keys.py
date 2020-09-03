@@ -21,7 +21,7 @@ class KeyModel:
         return self.session.query(Key).filter(Key.name == key_name).first() is not None
 
     def create(
-        self, name: str, encrypted_key: bytes, key_hash: str, user: User
+        self, name: str, encrypted_key: bytes, key_hash: str, user_id: int
     ) -> bool:
         """
         Creates a key in database.
@@ -29,18 +29,22 @@ class KeyModel:
         :param name:
         :param encrypted_key:
         :param key_hash:
-        :param user:
+        :param user_id:
         :return: Boolean value indicating success/failure.
         """
 
         try:
             key: Key = Key(
-                name=name, encrypted_key=encrypted_key, key_hash=key_hash, user=user
+                name=name,
+                encrypted_key=encrypted_key,
+                key_hash=key_hash,
+                user_id=user_id,
             )
 
             self.session.add(key)
             self.session.commit()
         except SQLAlchemyError:
+            self.session.rollback()
             return False
 
         return True
