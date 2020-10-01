@@ -1,6 +1,12 @@
 from ssh_manager_backend import __version__
 from ssh_manager_backend.db.database import db_session
-from ssh_manager_backend.db.schema import AccessControl, Key, KeyMapping, User
+from ssh_manager_backend.db.schema import (
+    AccessControl,
+    Key,
+    KeyMapping,
+    User,
+    UserSession,
+)
 
 
 def test_version():
@@ -9,6 +15,7 @@ def test_version():
 
 def db_cleanup():
     session = db_session()
+    session.query(UserSession).delete()
     session.query(AccessControl).delete()
     session.query(KeyMapping).delete()
     session.query(Key).delete()
