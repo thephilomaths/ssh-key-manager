@@ -18,8 +18,11 @@ class User(Base):
     iv_for_kek = Column(LargeBinary, unique=True)
     salt_for_kek = Column(LargeBinary, unique=True)
     salt_for_password = Column(LargeBinary, unique=True)
-    keys = relationship("Key", backref="users")
-    access_control = relationship("AccessControl", backref="users")
+    keys = relationship("Key", cascade="all,delete", backref="users")
+    access_control = relationship(
+        "AccessControl", cascade="all,delete", backref="users"
+    )
+    user_session = relationship("UserSession", cascade="all,delete", backref="users")
 
     def __repr__(self) -> str:
         """
@@ -38,7 +41,7 @@ class Key(Base):
     key_hash = Column(String, unique=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
-    key_mapping = relationship("KeyMapping", backref="keys")
+    key_mapping = relationship("KeyMapping", cascade="all,delete", backref="keys")
 
     def __repr__(self) -> str:
         """
@@ -78,3 +81,13 @@ class AccessControl(Base):
         """
 
         return f"Access control {self.id}"
+
+
+class UserSession(Base):
+    __tablename__ = "user_session"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String, ForeignKey("users.username"))
+    access_token = Column(String, unique=True)
+    active = Column(Boolean)
+    user = relationship("User")
