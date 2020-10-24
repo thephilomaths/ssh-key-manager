@@ -15,7 +15,7 @@ class TestKeyModel:
         user = UserModel()
         name: str = "test_user"
         username: str = "test_username"
-        password: str = "test_password"
+        password: str = b"test_password"
         admin: bool = False
         encrypted_dek: bytes = b"test_encrypted_dek"
         iv_for_dek: bytes = b"test_iv_for_dek"

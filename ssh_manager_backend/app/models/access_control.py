@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -30,7 +30,7 @@ class AccessControlModel:
 
         return True
 
-    def has_access(self, username: str, ip_address: str) -> bool:
+    def has_access(self, username: str, ip_address: str) -> Union[bool, None]:
         """
         Checks whether a user has access to the provided the list of ip addresses.
 
@@ -40,12 +40,14 @@ class AccessControlModel:
         """
 
         try:
-            acl_details: AccessControl = self.session.query(AccessControl).filter(
-                AccessControl.username == username
-            ).first()
+            acl_details: AccessControl = (
+                self.session.query(AccessControl)
+                .filter(AccessControl.username == username)
+                .first()
+            )
             return ip_address in acl_details.ip_addresses
         except [AttributeError, SQLAlchemyError]:
-            return False
+            return None
 
     def grant_access(self, username: str, ip_addresses: List[str]) -> bool:
         """
@@ -57,9 +59,11 @@ class AccessControlModel:
         """
 
         try:
-            acl_details: AccessControl = self.session.query(AccessControl).filter(
-                AccessControl.username == username
-            ).first()
+            acl_details: AccessControl = (
+                self.session.query(AccessControl)
+                .filter(AccessControl.username == username)
+                .first()
+            )
 
             acl_details.ip_addresses += ip_addresses
             acl_details.ip_addresses = list(set(acl_details.ip_addresses))
@@ -90,9 +94,11 @@ class AccessControlModel:
         """
 
         try:
-            acl_details: AccessControl = self.session.query(AccessControl).filter(
-                AccessControl.username == username
-            ).first()
+            acl_details: AccessControl = (
+                self.session.query(AccessControl)
+                .filter(AccessControl.username == username)
+                .first()
+            )
 
             if not revoke_all:
                 for ip in ip_addresses:
@@ -127,9 +133,11 @@ class AccessControlModel:
         """
 
         try:
-            acl_details: AccessControl = self.session.query(AccessControl).filter(
-                AccessControl.username == username
-            ).first()
+            acl_details: AccessControl = (
+                self.session.query(AccessControl)
+                .filter(AccessControl.username == username)
+                .first()
+            )
             return acl_details.ip_addresses
         except (AttributeError, SQLAlchemyError):
             return []

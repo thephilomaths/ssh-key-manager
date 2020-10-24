@@ -10,7 +10,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     username = Column(String, unique=True)
-    password = Column(String)
+    password = Column(LargeBinary)
     admin = Column(Boolean)
     encrypted_dek = Column(LargeBinary, unique=True)
     iv_for_dek = Column(LargeBinary, unique=True)

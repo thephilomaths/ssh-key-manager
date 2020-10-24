@@ -34,7 +34,7 @@ class SessionModel:
         """
 
         try:
-            user_session: UserSession = UserSession(
+            user_session = UserSession(
                 access_token=access_token, username=username, active=True
             )
             self.session.add(user_session)

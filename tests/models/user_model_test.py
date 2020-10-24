@@ -15,7 +15,7 @@ class TestUserModel:
         user = UserModel()
         name: str = "test_user"
         username: str = "test_username"
-        password: str = "test_password"
+        password: str = b"test_password"
         admin: bool = False
         encrypted_dek: bytes = b"test_encrypted_dek"
         iv_for_dek: bytes = b"test_iv_for_dek"
@@ -63,7 +63,7 @@ class TestUserModel:
     def test_password_hash(self):
         user = UserModel()
         username: str = "test_username"
-        password: str = "test_password"
+        password: str = b"test_password"
         assert user.password_hash("non_existent_username") is None
         assert user.password_hash(username) == password
 

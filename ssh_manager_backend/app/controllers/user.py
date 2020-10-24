@@ -1,77 +1,72 @@
 import uuid
-from typing import Tuple, Union
+from typing import Dict, Tuple
 
-from src.modules.utils import hash_data
+from flask import Response
 
+from ssh_manager_backend.app.controllers import api
 from ssh_manager_backend.app.controllers.secrets import Secrets
 from ssh_manager_backend.app.models import SessionModel, UserModel
+from ssh_manager_backend.app.services import utils
 
 
 class User:
     def __init__(self):
-        self.secrets: Secrets = Secrets()
+        self.secrets = Secrets()
         self.username: str = ""
-        self.__access_token: str = ""
         self.__password: str = ""
-        self.email: str = ""
         self.name: str = ""
         self.admin: str = ""
         self.user: UserModel = UserModel()
 
-    def set_attributes(
-        self, username: str, password: str, email: str, name: str, access_token: str
-    ):
+    def set_attributes(self, username: str, password: str, name: str):
         """
         Sets the class attribute based on the function arguments.
 
         :param username: The username of the user
         :param password: The password of the user
-        :param email: The email of the user
         :param name: The name of the user
-        :param access_token: The access token of the user
         :return:
         """
 
         self.username = username
         self.__password = password
-        self.email = email
         self.name = name
-        self.__access_token = access_token
 
-    def register(self, username: str, password: str, email: str, name: str) -> bool:
+    def register(self, body: Dict[str, any]) -> Response:
         """
         Generates the secrets of the user based on the password. Hashes the password using SAH256 and stores the
         generated information in DynamoDB.
 
-        :param username:
-        :param password:
-        :param email:
-        :param name:
-        :param table_name:
+        :param body:
         :return: True/False for success/failure
         """
 
+        data, key, iv = api.decrypt_request_data(body=body)
         self.set_attributes(
-            username=username,
-            password=password,
-            email=email,
-            name=name,
-            access_token=uuid.uuid4().hex,
+            username=data["username"], password=data["password"], name=data["name"]
         )
 
-        self.secrets.generate_secrets(password=self.__password)
-        self.__password = hash_data(self.__password, self.salt_for_password)
+        if self.user.exists(username=self.username):
+            data = {"success": False}
+            return api.response_data(
+                data=data, message="Username is taken", status_code=409, key=key, iv=iv
+            )
+
+        self.secrets.generate_secrets(password=str(self.__password))
+        self.__password = utils.hash_data(
+            self.__password, self.secrets.salt_for_password
+        )
         user_is_admin = True
 
         if self.user.admin_exists():
             user_is_admin = False
 
-        return self.user.create(
-            name=name,
+        user_created = self.user.create(
+            name=self.name,
             username=self.username,
             password=self.__password,
             admin=user_is_admin,
-            encrypted_dek=self.secrets.encrypted_dek,
+            encrypted_dek=self.secrets.dek,
             iv_for_dek=self.secrets.iv_for_dek,
             salt_for_dek=self.secrets.salt_for_dek,
             iv_for_kek=self.secrets.iv_for_kek,
@@ -79,48 +74,90 @@ class User:
             salt_for_password=self.secrets.salt_for_password,
         )
 
-    def login(self, username: str, password: str) -> Tuple[Union[bool, str]]:
+        data = {"success": user_created}
+        return api.response_data(
+            data=data, message="User created", status_code=200, key=key, iv=iv
+        )
+
+    def login(self, body: Dict[str, any]) -> Response:
         """
         Handles user login.
 
-        :param username: The username of the user
-        :param password: The password of the user
-        :param table_name: The table in which the data is to be inserted
+        :param body:
         :return: access token upon successful login
         """
 
-        if self.user.exists(username):
+        data, key, iv = api.decrypt_request_data(body=body)
+        self.set_attributes(
+            username=data["username"], password=data["password"], name=""
+        )
+
+        if self.user.exists(self.username):
+            user_data = self.user.get_user(username=self.username)
+            self.set_attributes(
+                username=self.username, password=self.__password, name=user_data.name
+            )
+            secrets = {
+                "encryptedDek": user_data.encrypted_dek,
+                "ivForDek": user_data.iv_for_dek,
+                "saltForDek": user_data.salt_for_dek,
+                "ivForKek": user_data.iv_for_kek,
+                "saltForKek": user_data.salt_for_kek,
+                "saltForPassword": user_data.salt_for_password,
+            }
+            self.secrets.set_secrets(secrets=secrets)
             if self.user.password_match(
-                username=username, password=hash_data(password)
+                username=self.username,
+                password=utils.hash_data(
+                    self.__password, self.secrets.salt_for_password
+                ),
             ):
-                access_token: str = uuid.uuid4()
+                access_token: str = uuid.uuid4().hex
                 session: SessionModel = SessionModel()
-                if not session.exists(username=username):
-                    session.create(usernmae=username, access_token=access_token)
+                if not session.exists(username=self.username):
+                    session.create(username=self.username, access_token=access_token)
                 else:
-                    session.activate_session(username=username)
+                    session.activate_session(username=self.username)
 
-                return (True, access_token)
+                data = {"success": True, "access_token": access_token}
+                return api.response_data(
+                    data=data,
+                    message="Login successful",
+                    status_code=200,
+                    key=key,
+                    iv=iv,
+                )
             else:
-                return (False, "Password does not match")
+                data = {
+                    "success": False,
+                }
+                return api.response_data(
+                    data=data,
+                    message="Password does not match",
+                    status_code=401,
+                    key=key,
+                    iv=iv,
+                )
 
-        return (False, "User does not exists")
+        data = {"success": False}
+        return api.response_data(
+            data=data, message="User does not exists", status_code=401, key=key, iv=iv
+        )
 
-    def is_admin(self) -> bool:
-        return self.user.get_user(username=self.username).admin
-
-    @property
-    def password(self) -> str:
+    def is_admin(self, body: Dict[str, any]) -> Response:
         """
-        Returns the password of the user
-        """
+        Checks whether user is admin or not.
 
-        return self.__password
+        Args:
+            body:
 
-    @property
-    def access_token(self) -> str:
-        """
-        Returns the access token of the user
-        """
+        Returns:
 
-        return self.__access_token
+        """
+        data, key, iv = api.decrypt_request_data(body=body)
+        self.set_attributes(username=data["username"], password="", name="")
+
+        user = self.user.get_user(username=self.username)
+
+        data = {"success": True, "is_admin": user is not None and user.admin}
+        return api.response_data(data=data, message="", status_code=200, key=key, iv=iv)

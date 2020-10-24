@@ -32,9 +32,12 @@ class UserModel:
         """
 
         try:
-            password_hash: str = self.session.query(User).filter(
-                User.username == username
-            ).first().password
+            password_hash: str = (
+                self.session.query(User)
+                .filter(User.username == username)
+                .first()
+                .password
+            )
             return password_hash
         except AttributeError:
             return None
@@ -52,7 +55,7 @@ class UserModel:
         self,
         name: str,
         username: str,
-        password: str,
+        password: bytes,
         admin: bool,
         encrypted_dek: bytes,
         iv_for_dek: bytes,
@@ -99,7 +102,7 @@ class UserModel:
 
         return True
 
-    def password_match(self, username: str, password: str) -> bool:
+    def password_match(self, username: str, password: bytes) -> bool:
         """
         Checks whether the given password matches the password corresponding to the username.
 
@@ -109,9 +112,12 @@ class UserModel:
         """
 
         try:
-            user_password: str = self.session.query(User).filter(
-                User.username == username
-            ).first().password
+            user_password: str = (
+                self.session.query(User)
+                .filter(User.username == username)
+                .first()
+                .password
+            )
             return user_password == password
         except AttributeError:
             return False
@@ -135,9 +141,9 @@ class UserModel:
         """
 
         try:
-            user: User = self.session.query(User).filter(
-                User.username == username
-            ).first()
+            user: User = (
+                self.session.query(User).filter(User.username == username).first()
+            )
             self.session.delete(user)
             self.session.commit()
         except SQLAlchemyError:

@@ -1,15 +1,10 @@
-import json
-
-from config import logger
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from flask import Response
-from src.modules.request_decryption import request_decryption
 
 
 """
-This is sa utility file which contains functions which are called frequently in various fieles.
+This is sa utility file which contains functions which are called frequently in various files.
 """
 
 
@@ -26,7 +21,6 @@ def hash_data(data: str or bytes, salt: bytes) -> bytes:
     ----------
     """
 
-    logger.info("Hashing data using SHA256")
     if not isinstance(data, bytes):
         data = bytes(data, encoding="utf-8") + salt
 
@@ -52,7 +46,6 @@ def pbkdf(data: str or bytes, salt: bytes) -> bytes:
     if not isinstance(data, bytes):
         data = bytes(data, encoding="utf-8")
 
-    logger.info("Calculating PBKDF of data")
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
@@ -62,51 +55,3 @@ def pbkdf(data: str or bytes, salt: bytes) -> bytes:
     )
 
     return kdf.derive(data)
-
-
-def success_response(data: dict, status_code: int, key: bytes, iv: bytes) -> Response:
-    """
-    A function for generating a success response.
-    Returns a flask Response object
-
-    :param data: The response data
-    :param status_code: The status code of the response
-    :param key: The key for encrypting the response
-    :param iv: The iv for encrypting the response
-    :return: Response
-    """
-
-    response_body = {"data": data}
-
-    response_body = request_decryption.encrypt(body=response_body, key=key, iv=iv)
-
-    return Response(
-        response=json.dumps(response_body),
-        status=status_code,
-        mimetype="application/json",
-    )
-
-
-def error_response(
-    error_message: str, status_code: int, key: bytes, iv: bytes
-) -> Response:
-    """
-    A function for generating error response.
-    Returns a flask Response object.
-
-    :param error_message: The error message to be returned
-    :param status_code: The status code of the response
-    :param key: The key for encrypting the response
-    :param iv: The iv for encrypting the response
-    :return: Response
-    """
-
-    response_body = {"data": {"error": error_message}}
-
-    response_body = request_decryption.encrypt(body=response_body, key=key, iv=iv)
-
-    return Response(
-        response=json.dumps(response_body),
-        status=status_code,
-        mimetype="application/json",
-    )

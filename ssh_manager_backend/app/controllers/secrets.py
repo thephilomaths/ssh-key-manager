@@ -83,7 +83,7 @@ class Secrets:
         aes = AES(self.kek, self.iv_for_kek)
         return aes.encrypt(self.dek)
 
-    def generate_secrets(self, password: bytes):
+    def generate_secrets(self, password: str):
         """
         A utility function which calls the above functions for generating the value of secrets. This function is
         called during the registration phase.
