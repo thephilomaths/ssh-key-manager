@@ -1,21 +1,21 @@
 import pytest
 
-from ssh_manager_backend.app.models.user import UserModel
+from ssh_manager_backend.app.models.user import User
 from ssh_manager_backend.db import User
 from tests.test_ssh_manager_backend import db_cleanup
 
 
-class TestUserModel:
+class TestUser:
     @pytest.fixture
     def cleanup(self):
         yield
         db_cleanup()
 
     def test_create(self):
-        user = UserModel()
+        user = User()
         name: str = "test_user"
         username: str = "test_username"
-        password: str = b"test_password"
+        password: bytes = b"test_password"
         admin: bool = False
         encrypted_dek: bytes = b"test_encrypted_dek"
         iv_for_dek: bytes = b"test_iv_for_dek"
@@ -57,31 +57,31 @@ class TestUserModel:
         )
 
     def test_admin_exist(self):
-        user = UserModel()
+        user = User()
         assert user.admin_exists() is False
 
     def test_password_hash(self):
-        user = UserModel()
+        user = User()
         username: str = "test_username"
         password: str = b"test_password"
         assert user.password_hash("non_existent_username") is None
         assert user.password_hash(username) == password
 
     def test_exists(self):
-        user = UserModel()
+        user = User()
         username: str = "test_username"
         assert user.exists("non_existent_username") is False
         assert user.exists(username) is True
 
     def test_get_user(self):
-        user = UserModel()
+        user = User()
         username: str = "test_username"
         assert user.get_user("non_existent_username") is None
         assert isinstance(user.get_user(username), User) is True
         print(User)
 
     def test_destroy_user(self, cleanup):
-        user = UserModel()
+        user = User()
         username: str = "test_username"
         assert user.destroy_user("non_existent_username") is False
         assert user.destroy_user(username) is True

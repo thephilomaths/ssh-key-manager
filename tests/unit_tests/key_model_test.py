@@ -1,12 +1,11 @@
 import pytest
 
-from ssh_manager_backend.app.models.keys import KeyModel
-from ssh_manager_backend.app.models.keys_mapping import KeyMappingModel
+from ssh_manager_backend.app.models.private_keys import KeyModel
 from ssh_manager_backend.app.models.user import UserModel
 from tests.test_ssh_manager_backend import db_cleanup
 
 
-class TestKeyMappingModel:
+class TestKeyModel:
     @pytest.fixture
     def cleanup(self):
         yield
@@ -56,7 +55,7 @@ class TestKeyMappingModel:
             is True
         )
 
-        user_id: int = user.get_user(username=username).id
+        user_id = user.get_user(username=username).id
 
         assert (
             key.create(
@@ -68,29 +67,18 @@ class TestKeyMappingModel:
             is True
         )
 
-        key_mapping: KeyMappingModel = KeyMappingModel()
-        ip_address: str = "1.1.1.1"
-
-        assert key_mapping.create(ip_address=ip_address, key_name=key_name) is True
-
-        assert (
-            key_mapping.create(ip_address=ip_address, key_name="non_existent_key")
-            is False
-        )
-
     def test_exists(self):
-        key_mapping: KeyMappingModel = KeyMappingModel()
-        ip_address: str = "1.1.1.1"
-
-        assert key_mapping.exists(ip_address=ip_address) is True
-
-        assert key_mapping.exists(ip_address="2.1.1.1") is False
-
-    def test_get_mapping(self, cleanup):
-        key_mapping: KeyMappingModel = KeyMappingModel()
+        key = KeyModel()
         key_name: str = "test_key"
-        ip_address: str = "1.1.1.1"
 
-        assert key_mapping.get_mapping(ip_address=ip_address).key_name == key_name
+        assert key.exists(key_name=key_name) is True
 
-        assert key_mapping.get_mapping(ip_address="2.2.2.2") is None
+        assert key.exists(key_name="non_existent_key") is False
+
+    def test_get_key(self, cleanup):
+        key = KeyModel()
+        key_name: str = "test_key"
+
+        assert key.get_key(key_name=key_name).name == key_name
+
+        assert key.get_key(key_name="non_existent_keyname") is None

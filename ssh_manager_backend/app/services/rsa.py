@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 
 """
-This is wrapper around rsa class of cryptography.hazmat.primitives.assymetric and provides the functionality of
+This is wrapper around rsa class of cryptography.hazmat.primitives.asymmetric and provides the functionality of
 generating RSA key-pair, serializing the public key, decrypting a cipher using the private key and refreshing
 the kye-pair.
 """
@@ -39,7 +39,7 @@ class RSA:
         :returns: serialized public key
         """
 
-        public_key_serialized: bytes = self.public_key.public_bytes(
+        public_key_serialized: bytes = self._public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
@@ -54,7 +54,7 @@ class RSA:
         :return: plaintext
         """
 
-        plaintext: bytes = self.__private_key.decrypt(
+        plaintext: bytes = self._private_key.decrypt(
             ciphertext=ciphertext,
             padding=padding.OAEP(
                 mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None

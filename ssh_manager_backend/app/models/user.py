@@ -6,7 +6,7 @@ from ssh_manager_backend.db import User
 from ssh_manager_backend.db.database import db_session
 
 
-class UserModel:
+class Users:
     def __init__(self):
         self.session = db_session()
 
@@ -81,18 +81,17 @@ class UserModel:
         """
 
         try:
-            user: User = User(
-                name=name,
-                username=username,
-                password=password,
-                admin=admin,
-                encrypted_dek=encrypted_dek,
-                iv_for_dek=iv_for_dek,
-                salt_for_dek=salt_for_dek,
-                iv_for_kek=iv_for_kek,
-                salt_for_kek=salt_for_kek,
-                salt_for_password=salt_for_password,
-            )
+            user = User()
+            user.name = name
+            user.username = username
+            user.password = password
+            user.admin = admin
+            user.encrypted_dek = encrypted_dek
+            user.iv_for_dek = iv_for_dek
+            user.salt_for_dek = salt_for_dek
+            user.iv_for_kek = iv_for_kek
+            user.salt_for_kek = salt_for_kek
+            user.salt_for_password = salt_for_password
 
             self.session.add(user)
             self.session.commit()

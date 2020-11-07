@@ -2,7 +2,7 @@ from typing import List, Union
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from ssh_manager_backend.db import AccessControl
+from ssh_manager_backend.db import AccessControl, User
 from ssh_manager_backend.db.database import db_session
 
 
@@ -60,7 +60,8 @@ class AccessControlModel:
 
         try:
             acl_details: AccessControl = (
-                self.session.query(AccessControl)
+                self.session.query(AccessControl, User)
+                .join(User)
                 .filter(AccessControl.username == username)
                 .first()
             )
@@ -96,6 +97,7 @@ class AccessControlModel:
         try:
             acl_details: AccessControl = (
                 self.session.query(AccessControl)
+                .join(User)
                 .filter(AccessControl.username == username)
                 .first()
             )
@@ -135,6 +137,7 @@ class AccessControlModel:
         try:
             acl_details: AccessControl = (
                 self.session.query(AccessControl)
+                .join(User)
                 .filter(AccessControl.username == username)
                 .first()
             )

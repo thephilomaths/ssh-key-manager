@@ -6,7 +6,7 @@ DB_URI = (
     # "postgresql+psycopg2://postgres:vP28ObNJLhb5qFDe@35.222.241.198/ssh_manager_test"
     "postgresql+psycopg2://ssh_manager:pass@localhost/ssh_manager_dev"
 )
-engine = create_engine(DB_URI, echo=True)
+engine = create_engine(DB_URI, echo=False)
 db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
 )

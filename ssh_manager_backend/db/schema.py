@@ -18,11 +18,12 @@ class User(Base):
     iv_for_kek = Column(LargeBinary, unique=True)
     salt_for_kek = Column(LargeBinary, unique=True)
     salt_for_password = Column(LargeBinary, unique=True)
-    keys = relationship("Key", cascade="all,delete", backref="users")
+    private_key = relationship("PrivateKey", cascade="all,delete", backref="users")
+    public_key = relationship("PublicKey", cascade="all,delete", backref="users")
     access_control = relationship(
         "AccessControl", cascade="all,delete", backref="users"
     )
-    user_session = relationship("UserSession", cascade="all,delete", backref="users")
+    session = relationship("Session", cascade="all,delete", backref="users")
 
     def __repr__(self) -> str:
         """
@@ -32,32 +33,47 @@ class User(Base):
         return f"User {self.id}"
 
 
-class Key(Base):
-    __tablename__ = "keys"
+class PrivateKey(Base):
+    __tablename__ = "private_keys"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
-    encrypted_key = Column(LargeBinary, unique=True)
+    encrypted_private_key = Column(LargeBinary, unique=True)
     key_hash = Column(String, unique=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
-    key_mapping = relationship("KeyMapping", cascade="all,delete", backref="keys")
 
     def __repr__(self) -> str:
         """
         :return: key id
         """
 
-        return f"Key {self.id}"
+        return f"Private Key {self.id}"
 
 
-class KeyMapping(Base):
-    __tablename__ = "key_mapping"
+class PublicKey(Base):
+    __tablename__ = "public_keys"
 
     id = Column(Integer, primary_key=True)
-    key_name = Column(String, ForeignKey("keys.name"))
+    public_key = Column(LargeBinary, unique=True)
+    key_hash = Column(String, unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User")
+
+    def __repr__(self) -> str:
+        """
+        :return: key id
+        """
+
+        return f"Public Key {self.id}"
+
+
+class PrivateKeyMapping(Base):
+    __tablename__ = "private_key_mapping"
+
+    id = Column(Integer, primary_key=True)
+    private_key_id = Column(String, ForeignKey("private_keys.id"))
     ip_address = Column(String, unique=True)
-    key = relationship("Key")
+    key = relationship("PrivateKey")
 
     def __repr__(self) -> str:
         """
@@ -71,7 +87,7 @@ class AccessControl(Base):
     __tablename__ = "access_control"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String, ForeignKey("users.username"))
+    user_id = Column(String, ForeignKey("users.id"))
     ip_addresses = Column(ARRAY(String))
     user = relationship("User")
 
@@ -83,8 +99,8 @@ class AccessControl(Base):
         return f"Access control {self.id}"
 
 
-class UserSession(Base):
-    __tablename__ = "user_session"
+class Session(Base):
+    __tablename__ = "sessions"
 
     id = Column(Integer, primary_key=True)
     username = Column(String, ForeignKey("users.username"))
